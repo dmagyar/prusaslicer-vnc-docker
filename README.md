@@ -1,6 +1,12 @@
 ## This modified version incorporates prusaslicer. Thanks for the original author for the x11-vnc container!
 ### you can pull a version from docker hub as well: ```dmagyar/prusaslicer-vnc-docker:latest```
 
+My common run script is:
+```
+docker run -p 6080:80 -e OPENBOX_ARGS="--startup /Slic3r/slic3r-dist/prusa-slicer" -v /dev/shm:/dev/shm -v /data/slicer:/root dmagyar/prusaslicer-vnc-docker:latest
+```
+
+
 # docker-ubuntu-vnc-desktop
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/dorowu/ubuntu-desktop-lxde-vnc.svg)](https://hub.docker.com/r/dorowu/ubuntu-desktop-lxde-vnc/)
