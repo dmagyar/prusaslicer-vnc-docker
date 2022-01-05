@@ -1,4 +1,5 @@
 ## This modified version incorporates prusaslicer. Thanks for the original author for the x11-vnc container!
+### you can pull a version from docker hub as well: ```dmagyar/prusaslicer-vnc-docker:latest```
 
 # docker-ubuntu-vnc-desktop
 
