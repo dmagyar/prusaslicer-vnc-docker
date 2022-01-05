@@ -1,3 +1,5 @@
+## This modified version incorporates prusaslicer. Thanks for the original author for the x11-vnc container!
+
 # docker-ubuntu-vnc-desktop
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/dorowu/ubuntu-desktop-lxde-vnc.svg)](https://hub.docker.com/r/dorowu/ubuntu-desktop-lxde-vnc/)

@@ -14,7 +14,7 @@ RUN sed -i 's#http://archive.ubuntu.com/ubuntu/#mirror://mirrors.ubuntu.com/mirr
 # built-in packages
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt update \
-    && apt install -y --no-install-recommends software-properties-common curl apache2-utils \
+    && apt install -y --no-install-recommends software-properties-common curl apache2-utils ca-certificates \
     && apt update \
     && apt install -y --no-install-recommends --allow-unauthenticated \
         supervisor nginx sudo net-tools zenity xz-utils \
@@ -27,42 +27,24 @@ RUN apt update \
 RUN apt update \
     && apt install -y --no-install-recommends --allow-unauthenticated \
         xvfb x11vnc \
-        vim-tiny firefox ttf-ubuntu-font-family ttf-wqy-zenhei  \
+        vim-tiny ttf-ubuntu-font-family ttf-wqy-zenhei  \
     && apt autoclean -y \
     && apt autoremove -y \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN apt update \
-    && apt install -y gpg-agent \
-    && curl -LO https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
-    && (dpkg -i ./google-chrome-stable_current_amd64.deb || apt-get install -fy) \
-    && curl -sSL https://dl.google.com/linux/linux_signing_key.pub | apt-key add \
-    && rm google-chrome-stable_current_amd64.deb \
     && rm -rf /var/lib/apt/lists/*
 
 RUN apt update \
     && apt install -y --no-install-recommends --allow-unauthenticated \
         lxde gtk2-engines-murrine gnome-themes-standard gtk2-engines-pixbuf gtk2-engines-murrine arc-theme \
+        freeglut3 libgtk2.0-dev libwxgtk3.0-gtk3-dev libwx-perl libxmu-dev libgl1-mesa-glx libgl1-mesa-dri xdg-utils locales \
     && apt autoclean -y \
     && apt autoremove -y \
     && rm -rf /var/lib/apt/lists/*
 
 
-# Additional packages require ~600MB
-# libreoffice  pinta language-pack-zh-hant language-pack-gnome-zh-hant firefox-locale-zh-hant libreoffice-l10n-zh-tw
-
 # tini to fix subreap
 ARG TINI_VERSION=v0.18.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /bin/tini
 RUN chmod +x /bin/tini
-
-# ffmpeg
-RUN apt update \
-    && apt install -y --no-install-recommends --allow-unauthenticated \
-        ffmpeg \
-    && rm -rf /var/lib/apt/lists/* \
-    && mkdir /usr/local/ffmpeg \
-    && ln -s /usr/bin/ffmpeg /usr/local/ffmpeg/ffmpeg
 
 # python library
 COPY rootfs/usr/local/lib/web/backend/requirements.txt /tmp/
@@ -77,6 +59,36 @@ RUN apt-get update \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /var/cache/apt/* /tmp/a.txt /tmp/b.txt
+
+## install prusaslicer
+WORKDIR /Slic3r
+ADD getLatestPrusaSlicerRelease.sh /Slic3r
+
+RUN apt-get update && apt-get install -y \
+  jq \
+  curl \
+  ca-certificates \
+  unzip \
+  bzip2 \
+  git \
+  --no-install-recommends \
+  && chmod +x /Slic3r/getLatestPrusaSlicerRelease.sh \
+  && latestSlic3r=$(/Slic3r/getLatestPrusaSlicerRelease.sh url) \
+  && slic3rReleaseName=$(/Slic3r/getLatestPrusaSlicerRelease.sh name) \
+  && curl -sSL ${latestSlic3r} > ${slic3rReleaseName} \
+  && rm -f /Slic3r/releaseInfo.json \
+  && mkdir -p /Slic3r/slic3r-dist \
+  && tar -xjf ${slic3rReleaseName} -C /Slic3r/slic3r-dist --strip-components 1 \
+  && rm -f /Slic3r/${slic3rReleaseName} \
+  && rm -rf /var/lib/apt/lists/* \
+  && apt-get purge -y --auto-remove jq unzip bzip2 \
+  && apt-get autoclean \
+  && groupadd slic3r \
+  && useradd -g slic3r --create-home --home-dir /home/slic3r slic3r \
+  && mkdir -p /Slic3r \
+  && chown -R slic3r:slic3r /Slic3r /home/slic3r \
+  && locale-gen en_US \
+  && mkdir /root/.local
 
 
 ################################################################################
@@ -126,4 +138,5 @@ WORKDIR /root
 ENV HOME=/home/ubuntu \
     SHELL=/bin/bash
 HEALTHCHECK --interval=30s --timeout=5s CMD curl --fail http://127.0.0.1:6079/api/health
+VOLUME /root/
 ENTRYPOINT ["/startup.sh"]
