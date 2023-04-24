@@ -6,6 +6,11 @@ My common run script is:
 docker run -p 6080:80 -e OPENBOX_ARGS="--startup /Slic3r/slic3r-dist/prusa-slicer" -v /dev/shm:/dev/shm -v /data/slicer:/root dmagyar/prusaslicer-vnc-docker:latest
 ```
 
+Use ENV variables to override Prusaslicer release:
+
+```
+OVERRIDE_SLICER_URL=https://github.com/prusa3d/PrusaSlicer/releases/download/version_2.6.0-alpha6/PrusaSlicer-2.6.0-alpha6+linux-x64-GTK2-202303311518.tar.bz2
+```
 
 # docker-ubuntu-vnc-desktop
 

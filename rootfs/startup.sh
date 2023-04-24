@@ -72,4 +72,6 @@ fi
 PASSWORD=
 HTTP_PASSWORD=
 
+/Slic3r/updatePrusaSlicer.sh
+
 exec /bin/tini -- supervisord -n -c /etc/supervisor/supervisord.conf

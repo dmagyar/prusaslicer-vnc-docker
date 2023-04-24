@@ -1,7 +1,7 @@
 #!/bin/bash
 # Get the latest release of PrusaSlicer for Linux (non-AppImage) using the GitHub API
 
-set -eu
+function getVer () {
 
 if [[ $# -lt 1 ]]; then
   echo "~~~ $0 ~~~"
@@ -24,25 +24,16 @@ fi
 baseDir="/Slic3r"
 mkdir -p $baseDir
 
-if [[ ! -e "$baseDir/latestReleaseInfo.json" ]]; then
+#baseDir="."
 
-  curl -SsL https://api.github.com/repos/prusa3d/PrusaSlicer/releases/latest > $baseDir/latestReleaseInfo.json
 
-fi
+# Fetch latest release
+curl -SsL https://api.github.com/repos/prusa3d/PrusaSlicer/releases/latest > $baseDir/latestReleaseInfo.json
 
 releaseInfo=$(cat $baseDir/latestReleaseInfo.json)
+curl -SsL https://api.github.com/repos/prusa3d/PrusaSlicer/releases > $baseDir/releases.json
+allReleases=$(cat $baseDir/releases.json)
 
-if [[ $# -gt 1 ]]; then
-
-  VER=$2
-
-  if [[ ! -e "$baseDir/releases.json" ]]; then
-    curl -SsL https://api.github.com/repos/prusa3d/PrusaSlicer/releases > $baseDir/releases.json
-  fi
-
-  allReleases=$(cat $baseDir/releases.json)
-
-fi
 
 if [[ "$1" == "url" ]]; then
 
@@ -63,3 +54,28 @@ elif [[ "$1" == "name_ver" ]]; then
   echo "${allReleases}" | jq --arg VERSION "$VER" -r '.[] | .assets[] | .name | select(test("PrusaSlicer-" + $VERSION + "\\+linux64-.+.tar.bz2"))'
 
 fi
+}
+
+
+if [ "x$OVERRIDE_SLICER_URL" == "x" ]; then
+	latestSlic3r=$(getVer url) 
+else 
+	latestSlic3r=$(echo $OVERRIDE_SLICER_URL | sed 's/\+/%2B/g')
+fi
+
+latestVersion=$(echo $latestSlic3r | sed -e 's/.*version_//g' -e 's#/.*##g')
+
+if [ -d /Slic3r/slic3r-$latestVersion ]; then
+	echo "No Prusaslicer update needed"
+	exit 0;
+fi
+
+echo "[SLIC3R UPDATE] $latestVersion -> ${latestSlic3r}" 
+
+curl -sSL ${latestSlic3r} > ps.tar.bz2
+rm -f /Slic3r/slic3r-dist 
+mkdir -p /Slic3r/slic3r-$latestVersion
+tar -xjf ps.tar.bz2 -C /Slic3r/slic3r-$latestVersion --strip-components 1 
+rm -f /Slic3r/ps.tar.bz2
+ln -s /Slic3r/slic3r-$latestVersion /Slic3r/slic3r-dist
+
