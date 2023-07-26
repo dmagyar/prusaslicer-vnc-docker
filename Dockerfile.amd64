@@ -76,6 +76,7 @@ RUN apt-get update && apt-get install -y apt-utils \
   && groupadd slic3r \
   && useradd -g slic3r --create-home --home-dir /home/slic3r slic3r \
   && mkdir -p /Slic3r \
+  && locale-gen en_US.UTF-8 \
   && locale-gen en_US \
   && dpkg-reconfigure locales
 
